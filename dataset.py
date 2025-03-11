@@ -19,21 +19,25 @@ class courtDataset(Dataset):
         self.hp_radius = hp_radius
         self.scale = scale
 
-        self.path_dataset = './data'
+        self.path_dataset = './ds/data'
         self.path_images = os.path.join(self.path_dataset, 'images')
+
         with open(os.path.join(self.path_dataset, 'data_{}.json'.format(mode)), 'r') as f:
             self.data = json.load(f)
-        print('mode = {}, len = {}'.format(mode, len(self.data)))
 
+        print('mode = {}, len = {}'.format(mode, len(self.data)))
 
     def filter_data(self):
         new_data = []
+
         for i in range(len(self.data)):
             max_elems = np.array(self.data[i]['kps']).max(axis=0)
             min_elems = np.array(self.data[i]['kps']).min(axis=0)
+
             if max_elems[0] < self.input_width and min_elems[0] > 0 and max_elems[1] < self.input_height and \
                     min_elems[1] > 0:
                 new_data.append(self.data[i])
+
         return new_data
 
         

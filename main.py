@@ -4,10 +4,8 @@ import torch.nn as nn
 from base_trainer import train
 from base_validator import val
 import os
-from tensorboardX import SummaryWriter
 from tracknet import BallTrackerNet
 import argparse
-from torch.optim import lr_scheduler
 
 if __name__ == '__main__':
     
@@ -25,7 +23,7 @@ if __name__ == '__main__':
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        num_workers=1,
+        num_workers=8,
         pin_memory=True
     )
     
@@ -34,7 +32,7 @@ if __name__ == '__main__':
         val_dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=1,
+        num_workers=8,
         pin_memory=True
     )
 
@@ -46,7 +44,7 @@ if __name__ == '__main__':
     tb_path = os.path.join(exps_path, 'plots')
     if not os.path.exists(tb_path):
         os.makedirs(tb_path)
-    log_writer = SummaryWriter(tb_path)
+
     model_last_path = os.path.join(exps_path, 'model_last.pt')
     model_best_path = os.path.join(exps_path, 'model_best.pt')
 
@@ -54,24 +52,33 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), args.lr, betas=(0.9, 0.999), weight_decay=0)
 
     val_best_accuracy = 0
+
     for epoch in range(args.num_epochs):
+        log = {}
         train_loss = train(model, train_loader, optimizer, criterion, device, epoch, args.steps_per_epoch)
-        log_writer.add_scalar('Train/training_loss', train_loss, epoch)
+        log.update(Train_training_loss=train_loss)
 
         if (epoch > 0) & (epoch % args.val_intervals == 0):
             val_loss, tp, fp, fn, tn, precision, accuracy = val(model, val_loader, criterion, device, epoch)
             print('val loss = {}'.format(val_loss))
-            log_writer.add_scalar('Val/loss', val_loss, epoch)
-            log_writer.add_scalar('Val/tp', tp, epoch)
-            log_writer.add_scalar('Val/fp', fp, epoch)
-            log_writer.add_scalar('Val/fn', fn, epoch)
-            log_writer.add_scalar('Val/tn', tn, epoch)
-            log_writer.add_scalar('Val/precision', precision, epoch)
-            log_writer.add_scalar('Val/accuracy', accuracy, epoch)
+
+            log.update(Val_loss=val_loss)
+            log.update(Val_tp=tp)
+            log.update(Val_fp=fp)
+            log.update(Val_fn=fn)
+            log.update(Val_tn=tn)
+            log.update(Val_precision=precision)
+            log.update(Val_accuracy=accuracy)
+
             if accuracy > val_best_accuracy:
+                print("New best accuracy = {}".format(accuracy), "Saving model...")
                 val_best_accuracy = accuracy
                 torch.save(model.state_dict(), model_best_path)     
+                print('Model saved at {}'.format(model_best_path))
+
+            
             torch.save(model.state_dict(), model_last_path)
 
-
+        print('Epoch {}; Best accuracy = {}'.format(epoch, val_best_accuracy))
+        print('Epoch', epoch, log)    
 

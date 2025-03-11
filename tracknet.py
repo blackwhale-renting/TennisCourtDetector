@@ -42,35 +42,38 @@ class BallTrackerNet(nn.Module):
         self.conv16 = ConvBlock(in_channels=128, out_channels=64)
         self.conv17 = ConvBlock(in_channels=64, out_channels=64)
         self.conv18 = ConvBlock(in_channels=64, out_channels=self.out_channels)
+        
+        self._fw = nn.Sequential(
+            self.conv1,
+            self.conv2,
+            self.pool1,
+            self.conv3,
+            self.conv4,
+            self.pool2,
+            self.conv5,
+            self.conv6,
+            self.conv7,
+            self.pool3,
+            self.conv8,
+            self.conv9,
+            self.conv10,
+            self.ups1,
+            self.conv11,
+            self.conv12,
+            self.conv13,
+            self.ups2,
+            self.conv14,
+            self.conv15,
+            self.ups3,
+            self.conv16,
+            self.conv17,
+            self.conv18    
+        )
 
         self._init_weights()
-                  
+
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.conv2(x)    
-        x = self.pool1(x)
-        x = self.conv3(x)
-        x = self.conv4(x)
-        x = self.pool2(x)
-        x = self.conv5(x)
-        x = self.conv6(x)
-        x = self.conv7(x)
-        x = self.pool3(x)
-        x = self.conv8(x)
-        x = self.conv9(x)
-        x = self.conv10(x)
-        x = self.ups1(x)
-        x = self.conv11(x)
-        x = self.conv12(x)
-        x = self.conv13(x)
-        x = self.ups2(x)
-        x = self.conv14(x)
-        x = self.conv15(x)
-        x = self.ups3(x)
-        x = self.conv16(x)
-        x = self.conv17(x)
-        x = self.conv18(x)
-        return x
+        return self._fw(x)
     
     def _init_weights(self):
         for module in self.modules():
